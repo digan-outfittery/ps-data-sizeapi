@@ -295,7 +295,7 @@ _setup = setup(
         'prepare_build': PrepareBuild
     },
     extras_require={
-        'dev': ['flask==0.12.2',
+        'dev': ['flask==0.12.3',
                 'flask-cors==3.0.3'
                 ]
     },

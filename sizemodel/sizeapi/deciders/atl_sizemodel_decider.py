@@ -1,14 +1,11 @@
 import jsonschema
 from jsonschema import Draft4Validator as Validator
 import logging
-from pkg_resources import resource_filename
-import datetime as dt
-import flask
 
 # from tinder.db.db import fetch_from, get_sql
 # from tinder.db.connections import mldb as db_conn
-from sizeapi.deciders.decider_base import BaseDecider
-from sizeapi.utils.json_utils import load_json_resource
+from sizemodel.sizeapi.deciders.decider_base import BaseDecider
+from sizemodel.sizeapi.utils.json_utils import load_json_resource
 # from tinder.db.db import insert_into_table_batched
 
 # TODO: make application_id into enum ?
@@ -102,7 +99,7 @@ class ATLSizeModelDecider(BaseDecider):
         '''
 
         #TODO: Implement
-        return True
+        return False
 
     def _get_new_customer_size(self, customer_object):
         '''
@@ -115,13 +112,23 @@ class ATLSizeModelDecider(BaseDecider):
             dictionary: A Dictionary with the customer_id and that customers sizes. Example:
                             {
                                 "customerId": 122345_1224,
-                                "size": {
+                                "isFirstTimeCustomer": True,
+                                "shoeSize": {
+                                    "mu": 12.4,
+                                    "sigma": 3.2
+                                },
+                                "tShirtSize": {
+                                    "mu": 12.4,
+                                    "sigma": 3.2
+                                },
+                                "TrouserSize": {
                                     "mu": 12.4,
                                     "sigma": 3.2
                                 }
                             }
 
         '''
+
 
         #TODO: Actually implement
 
@@ -140,7 +147,16 @@ class ATLSizeModelDecider(BaseDecider):
             dictionary: A Dictionary with the customer_id and that customers sizes. Example:
                             {
                                 "customerId": 122345_1224,
-                                "size": {
+                                "isFirstTimeCustomer": False,
+                                "shoeSize": {
+                                    "mu": 12.4,
+                                    "sigma": 3.2
+                                },
+                                "tShirtSize": {
+                                    "mu": 12.4,
+                                    "sigma": 3.2
+                                },
+                                "TrouserSize": {
                                     "mu": 12.4,
                                     "sigma": 3.2
                                 }

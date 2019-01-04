@@ -1,6 +1,5 @@
 import flask
 import logging
-import os
 from flask import request
 from flask_healthcheck import Healthcheck
 
@@ -8,14 +7,14 @@ from prometheus_client import generate_latest, CollectorRegistry
 from prometheus_client import Counter, Histogram
 from prometheus_client import multiprocess
 
-import sizeapi
-from sizeapi.deciders.atl_sizemodel_decider import ATLSizeModelDecider
+import sizemodel
+from sizemodel.sizeapi.deciders.atl_sizemodel_decider import ATLSizeModelDecider
 # from tinder.fetching_feedback.get_customer_feedback import AllCustomerDataFetcher
-from sizeapi.utils import kblog
+from sizemodel.sizeapi.utils import kblog
+
 # from tinder.updating_tables.sql_tables import create_required_tables, regenerate_tables
 
 decider = ATLSizeModelDecider()
-# data_fetcher = AllCustomerDataFetcher()
 
 app = flask.Flask(__name__)
 log = logging.getLogger(__name__)
@@ -72,6 +71,7 @@ def decide():
     return do_decision_logic()
 
 
+
 @FLASK_REQUEST_LATENCY.time()
 def do_decision_logic():
     request_data = flask.request.get_json()
@@ -81,18 +81,20 @@ def do_decision_logic():
 
     except Exception as e:
         log.exception('Error validating request for request "{}"'
-                      .format(request_data.get('correlationId')))
+                      .format(request_data.get('data').get('meta').get('correlationId')))
         response = flask.jsonify({'errors': ['invalid request', str(e), repr(e)]})
         response.status_code = 409
         return response
 
     response_data = decider.decide(request_data)
 
+    decider.validate_response(response_data)
+
     try:
         decider.validate_response(response_data)
     except Exception as e:
         raise ValueError('Response for request "{}" is not valid: \n\n {}, \n\n{}'
-                         .format(request_data['correlation_id'], response_data, repr(e)))
+                         .format(response_data['data']['meta']['correlationId'], response_data, repr(e)))
 
     response = flask.jsonify(response_data)
     response.status_code = 201

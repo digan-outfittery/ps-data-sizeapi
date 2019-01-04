@@ -1,0 +1,91 @@
+# main: atls.models.size_new.main.main
+# model_class: atls.models.size_new.model.SizeModel
+data:
+    df_train:
+        fetcher: datasource
+        # for training we must not take data from 2015, where too_big was default.
+        # On 2015-12-10 they changed the order (and some reasons)
+        date_begin: '2014-01-01'
+        date_end: '2016-10-31'
+        kwargs:
+            columns:
+              - customer_id
+              - article_id
+              - items_kept
+              - feedback_too_large
+              - feedback_too_small
+              - item_no
+              - nav_size_code
+              - category
+              - trousers_size_width
+              - trousers_size_length
+              - shirt_size
+              - shoe_size
+              - weight_in_kg
+              - height_in_cm
+              - date_of_birth
+              - date_observed
+    df_pred:
+        fetcher: datasource
+        date_begin: '2017-01-01'
+        date_end: '2017-04-01'
+        kwargs:
+            columns:
+              - customer_id
+              - article_id
+              - shirt_size
+              - shoe_size
+              - trousers_size_length
+              - trousers_size_width
+              - item_no
+              - nav_size_code
+              - category
+              - items_kept
+              - feedback_too_large
+              - feedback_too_small
+    df_validate:
+        fetcher: datasource
+        date_begin: '2017-03-01'
+        date_end: '2017-03-02'
+        kwargs:
+            columns:
+              - customer_id
+              - article_id
+              - shirt_size
+              - shoe_size
+              - trousers_size_length
+              - trousers_size_width
+              - item_no
+              - nav_size_code
+              - category
+              - items_kept
+              - feedback_too_large
+              - feedback_too_small
+
+estimator:
+    init:
+        name: SizeClassifier
+        kwargs:
+            cust_sdev_thresh: 2.5
+            item_sdev_thresh: 2.5
+            max_mean_diff: 2.0
+            min_mean_diff: 0.5
+            trousers_multiple: 2.0
+            size_feedback_offset: 1.
+            min_obs: 4
+            gauss_max: 0.35
+            sigmoid_max: 0.9
+            right_shift: 0.5
+    fit:
+        data:
+          - df_train
+        kwargs:
+    predict:
+        data:
+          - df_pred
+        kwargs:
+    validate:
+        data:
+          - df_validate
+        kwargs:
+          threshold: 0.55

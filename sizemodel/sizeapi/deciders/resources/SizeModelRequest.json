@@ -24,44 +24,48 @@
                         },
                         "logLabel": {
                             "type": "string"
+                        },
+                        "correlationId": {
+                            "type": "string"
                         }
                     },
                     "required": [
                         "version",
                         "dateCreated",
                         "createdBy",
-                        "logLabel"
+                        "logLabel",
+                        "correlationId"
                     ]
-                },
-                "attributes": {
-                    "type": "object",
-                    "properties": {
-                        "customer": {
-                            "$ref": "#/definitions/customer"
-                        },
-                        "articles": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "customerId": {
-                            "type": "integer"
-                        }
-                    },
-                    "required": ["customer", "articles"]
                 }
             },
             "required": [
                 "type",
                 "id",
-                "meta",
-                "attributes"
+                "meta"
             ]
+        },
+        "attributes": {
+            "type": "object",
+            "properties": {
+                "customer": {
+                    "$ref": "#/definitions/customer"
+                },
+                "articles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "customerId": {
+                    "type": "integer"
+                }
+            },
+            "required": ["customer", "articles", "customerId"]
         }
     },
     "required": [
-        "data"
+        "data",
+        "attributes"
     ],
     "definitions": {
         "iso-datetime-utc": {

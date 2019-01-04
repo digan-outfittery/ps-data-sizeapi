@@ -1,0 +1,46 @@
+[{
+    "modeltargetvar": "weight_in_kg",
+    "modelinputvars": ["height_in_cm", "trousers_size_width", "trousers_size_length",
+        "num_shirt_size_cust", "customer_age"
+    ],
+    "coefficients": [-61.24681643677792, 0.33438341780793657, 2.413615283105323,
+        -0.4394902713977653, 4.724228434961372, -0.009858181325059001
+    ],
+    "threshold": 17
+}, {
+    "modeltargetvar": "height_in_cm",
+    "modelinputvars": ["weight_in_kg", "trousers_size_width", "trousers_size_length",
+        "num_shirt_size_cust", "customer_age"
+    ],
+    "coefficients": [91.14364333552739, 0.1734632985756925, -0.38058187288709494,
+        2.739498305884594, 0.5711942005438886, -0.09619746002595213
+    ],
+    "threshold": 16
+}, {
+    "modeltargetvar": "trousers_size_width",
+    "modelinputvars": ["weight_in_kg", "height_in_cm", "trousers_size_length",
+        "num_shirt_size_cust", "customer_age"
+    ],
+    "coefficients": [25.728664845004374, 0.10435645889712887, -0.031720243866697986,
+        0.061417470454851436, 0.7248250121067348, -0.0026454142316728324
+    ],
+    "threshold": 3.2
+}, {
+    "modeltargetvar": "trousers_size_length",
+    "modelinputvars": ["weight_in_kg", "height_in_cm", "trousers_size_width",
+        "num_shirt_size_cust", "customer_age"
+    ],
+    "coefficients": [-0.4732905221625714, -0.014713579410033989, 0.17679795594396625,
+        0.047556480940863455, 0.06881617477318233, 0.014091211859503766
+    ],
+    "threshold": 2.8
+}, {
+    "modeltargetvar": "num_shirt_size_cust",
+    "modelinputvars": ["weight_in_kg", "height_in_cm", "trousers_size_width",
+        "trousers_size_length", "customer_age"
+    ],
+    "coefficients": [-7.608258239070388, 0.04227941142530552, 0.009854145367549763,
+        0.1500306283952051, 0.018395834771619168, 0.014431225447173658
+    ],
+    "threshold": 1.3
+}]

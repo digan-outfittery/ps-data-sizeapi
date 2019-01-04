@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
-from sizeapi.utils.json_utils import load_json, fpath
-import os
-import sizeapi
+import sizemodel
 
 class BaseDecider(ABC):
     '''
@@ -39,7 +37,7 @@ class BaseDecider(ABC):
         # tag = str(tag)
 
         try:
-            version = sizeapi.VERSION
+            version = sizemodel.VERSION
         except BaseException:
             pass
 

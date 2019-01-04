@@ -24,51 +24,53 @@
                         },
                         "logLabel": {
                             "type": "string"
+                        },
+                        "correlationId": {
+                            "type": "string"
                         }
                     },
                     "required": [
                         "version",
                         "dateCreated",
                         "createdBy",
-                        "logLabel"
+                        "logLabel",
+                        "correlationId"
                     ]
-                },
-                "attributes": {
+                }
+            }
+        },
+        "attributes": {
+            "type": "object",
+            "properties": {
+                "customer": {
                     "type": "object",
                     "properties": {
-                        "customer": {
-                            "type": "object",
-                            "properties": {
-                                "customerId": "integer",
-                                "size": {"$ref": "#/definitions/size"}
-                            },
-                            "required": ["customerId", "size"]
-                        },
-                        "articles": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "articleId": {"type": "string"},
-                                    "size": {"$ref": "#/definitions/size"}
-                                },
-                                "required": ["articleId", "size"]
-                            }
-                        }
+                        "customerId": {"type": "integer"},
+                        "isFirstTimeCustomer": {"$ref": "#/definitions/size"},
+                        "shoeSize": {"$ref": "#/definitions/size"},
+                        "tShirtSize": {"$ref": "#/definitions/size"},
+                        "TrouserSize": {"$ref": "#/definitions/size"}
                     },
-                    "required": ["customer", "articles"]
+                    "required": ["customerId", "isFirstTimeCustomer", "shoeSize", "tShirtSize", "TrouserSize"]
+                },
+                "articles": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "articleId": {"type": "string"},
+                            "size": {"$ref": "#/definitions/size"}
+                        },
+                        "required": ["articleId", "size"]
+                    }
                 }
             },
-            "required": [
-                "type",
-                "id",
-                "meta",
-                "attributes"
-            ]
+            "required": ["customer", "articles"]
         }
     },
     "required": [
-        "data"
+        "data",
+        "attributes"
     ],
     "definitions": {
         "iso-datetime-utc": {
@@ -78,8 +80,8 @@
         "size": {
             "type": "object",
             "properties": {
-                "mu": {"type", "number"},
-                "sigma": {"type", "number"}
+                "mu": {"type": "number"},
+                "sigma": {"type": "number"}
             },
             "required": [
                 "mu",

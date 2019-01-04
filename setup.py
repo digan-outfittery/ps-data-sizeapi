@@ -9,7 +9,7 @@ from setuptools import Command, find_packages, setup
 
 # configure these
 PACKAGE_NAME = 'ps-data-sizeapi'
-MODULE_NAME = 'sizeapi'
+MODULE_NAME = 'sizemodel'
 
 
 # general functions
@@ -262,13 +262,13 @@ _setup = setup(
         'Flask-Cors==3.0.2',
         'Flask-Healthcheck==0.1.2',
         'jsonschema==2.6.0',
-        # 'simplejson==3.10.0',
-        # 'pandas==0.23.4',
+        'simplejson==3.10.0',
+        'pandas==0.23.4',
         # 'psycopg2==2.7.5',
         # 'sqlalchemy==1.2.12',
-        # 'prometheus_client==0.4.1',
+        'prometheus_client==0.4.1',
         # 'gitpython==2.1.11',
-        # 'python-logstash==0.4.6',
+        'python-logstash==0.4.6',
         # 'newrelic==4.2.0.100',
         # 'gunicorn==19.6.0'
     ],

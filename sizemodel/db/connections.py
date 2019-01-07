@@ -46,7 +46,7 @@ class mldb:
         )
 
 
-class paul:
+class dwh:
     @classmethod
     def get_info(cls):
         return {

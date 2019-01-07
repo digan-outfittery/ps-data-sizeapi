@@ -5,7 +5,7 @@ import pandas as pd
 import yaml
 
 import dateparser
-from sizemodel import connections
+from sizemodel.db.connections import mldb as db_conn
 from sizemodel.picklecache import PickleCache
 
 log = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ def datasource(*, date_begin, date_end, columns):
             and date_observed < %(date_end)s
     '''.format(columns=sql_columns)
 
-    with connections.mldb.connect() as conn:
+    with db_conn.connect() as conn:
         dates = {'date_begin': date_begin, 'date_end': date_end}
         df = pd.read_sql_query(q, conn, params=dates)
 

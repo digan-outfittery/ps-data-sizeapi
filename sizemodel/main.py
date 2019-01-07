@@ -7,6 +7,12 @@ from sizemodel.sizemodel_unwrapped.sizemodel import SizeClassifier
 from sklearn.metrics import roc_auc_score
 
 
+def main():
+
+    df_item_size, df_customer_size = run_size_model()
+    import ipdb; ipdb.set_trace()
+
+
 # def test_sizemodel_atlversion(config_path='sizemodel/config/baseconfig.yml'):
 #     # load config file
 #     config = load_yaml(config_path)
@@ -35,7 +41,7 @@ from sklearn.metrics import roc_auc_score
 def run_size_model(config_path='sizemodel/config/baseconfig.yml'):
     # load config file
     config = load_yaml(config_path)
-    data = load_from_db(config['data'])
+    data = load_from_db(config['data']) #TODO: Change date_end in config file
     df_train = data['df_train']
     df_test = data['df_pred']
 

@@ -46,10 +46,11 @@
                     "type": "object",
                     "properties": {
                         "customerId": {"type": "integer"},
-                        "isFirstTimeCustomer": {"$ref": "#/definitions/size"},
-                        "shoeSize": {"$ref": "#/definitions/size"},
-                        "tShirtSize": {"$ref": "#/definitions/size"},
-                        "TrouserSize": {"$ref": "#/definitions/size"}
+                        "isFirstTimeCustomer": {"type": "boolean"},
+                        "sizes": {
+                            "type": "array",
+                            "items": {"$ref": "#/definitions/size"}
+                        }
                     },
                     "required": ["customerId", "isFirstTimeCustomer", "shoeSize", "tShirtSize", "TrouserSize"]
                 },
@@ -59,7 +60,12 @@
                         "type": "object",
                         "properties": {
                             "articleId": {"type": "string"},
-                            "size": {"$ref": "#/definitions/size"}
+                            "sizes": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/size"
+                                }
+                            }
                         },
                         "required": ["articleId", "size"]
                     }
@@ -80,10 +86,12 @@
         "size": {
             "type": "object",
             "properties": {
+                "name": {"enum": ["shoeSize", "tShirtSize", "trouserSizeWidth", "trouserSizeLength"]},
                 "mu": {"type": "number"},
                 "sigma": {"type": "number"}
             },
             "required": [
+                "name",
                 "mu",
                 "sigma"
             ]

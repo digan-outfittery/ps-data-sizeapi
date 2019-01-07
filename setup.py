@@ -271,6 +271,7 @@ _setup = setup(
         'tensorflow==1.6.0',
         'edward==1.3.5',
         'scikit-learn==0.20.2',
+        'redis==3.0.1',
         # 'gitpython==2.1.11',
         'python-logstash==0.4.6',
         # 'newrelic==4.2.0.100',

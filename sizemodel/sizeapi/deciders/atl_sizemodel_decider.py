@@ -113,27 +113,64 @@ class ATLSizeModelDecider(BaseDecider):
                             {
                                 "customerId": 122345_1224,
                                 "isFirstTimeCustomer": True,
-                                "shoeSize": {
-                                    "mu": 12.4,
-                                    "sigma": 3.2
-                                },
-                                "tShirtSize": {
-                                    "mu": 12.4,
-                                    "sigma": 3.2
-                                },
-                                "TrouserSize": {
-                                    "mu": 12.4,
-                                    "sigma": 3.2
-                                }
+                                "sizes": [
+                                    {
+                                        "name": "shoeSize",
+                                        "mu": 12.4,
+                                        "sigma": 3.2
+                                    },
+                                    {
+                                        "name": "tShirtSize",
+                                        "mu": 12.4,
+                                        "sigma": 3.2
+                                    },
+                                    {
+                                        "name": "trouserSizeWidth",
+                                        "mu": 12.4,
+                                        "sigma": 3.2
+                                    },
+                                    {
+                                        "name": "trouserSizeLength",
+                                        "mu": 12.4,
+                                        "sigma": 3.2
+                                    }
+                                ]
                             }
 
         '''
 
-
-        #TODO: Actually implement
-
+        # TODO: Actually implement
         customer_id = customer_object['id']
-        return {'customerId': customer_id, 'size': {'mu': 12.4, 'sigma': 3.2}}
+
+        dct = {
+            "customerId": customer_id,
+            "isFirstTimeCustomer": True,
+            "sizes": [
+                {
+                    "name": "shoeSize",
+                    "mu": 12.4,
+                    "sigma": 3.2
+                },
+                {
+                    "name": "tShirtSize",
+                    "mu": 12.4,
+                    "sigma": 3.2
+                },
+                {
+                    "name": "trouserSizeWidth",
+                    "mu": 12.4,
+                    "sigma": 3.2
+                },
+                {
+                    "name": "trouserSizeLength",
+                    "mu": 12.4,
+                    "sigma": 3.2
+                }
+            ]
+        }
+
+
+        return dct
 
 
     def _get_repeat_customer_size(self, customer_id):

@@ -1,6 +1,0 @@
-{
-    "package_name": "ps-data-sizeapi",
-    "base_image": "base16.10:0.5.0",
-    "app": "sizeapi.app:app",
-    "scripts": []
-}

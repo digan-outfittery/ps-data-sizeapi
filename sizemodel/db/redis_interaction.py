@@ -1,6 +1,7 @@
 import redis
 import logging
 import pickle as pkl
+import os
 
 log = logging.getLogger(__name__)
 
@@ -9,12 +10,12 @@ class RedisStore():
     Helper class to deal with the interactions with the redis DB
     '''
 
-    def __init__(self, host='production-sizeapi-redis-3.apps.outfittery.de', port=6379):
+    def __init__(self, host=os.environ['DB_REDIS_ADDR'], port=os.environ['DB_REDIS_PORT']):
         '''
         Initialize the class
 
         Args:
-            host: The host address of the database
+            host: The host address of the dataRedibase
             port: The port of the database
         '''
 
@@ -90,9 +91,9 @@ class RedisStore():
 
 
 
-if __name__ == '__main__':
-    redisDB = RedisStore()
-    redisDB.set_customer_sizes(-1, {'size': 'test_customer'})
-    print(redisDB.get_customer_sizes(-1))
-    redisDB.set_article_sizes(-1, {'size': 'test_article'})
-    print(redisDB.get_article_sizes(-1))
+# if __name__ == '__main__':
+#     redisDB = RedisStore()
+#     redisDB.set_customer_sizes(-1, {'size': 'test_customer'})
+#     print(redisDB.get_customer_sizes(-1))
+#     redisDB.set_article_sizes(-1, {'size': 'test_article'})
+#     print(redisDB.get_article_sizes(-1))

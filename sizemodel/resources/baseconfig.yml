@@ -5,7 +5,7 @@ data:
         fetcher: datasource
         # for training we must not take data from 2015, where too_big was default.
         # On 2015-12-10 they changed the order (and some reasons)
-        date_begin: '2014-01-01'
+        date_begin: '2016-01-01'
         date_end: '2016-10-31'
         kwargs:
             columns:

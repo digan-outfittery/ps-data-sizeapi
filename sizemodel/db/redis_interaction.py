@@ -136,7 +136,7 @@ class RedisStore():
         '''
 
         return {
-            '{0}:{1}'.format(prefix, str(row[id_col])) : json.dumps(row['size_object'])
+            '{0}:{1}'.format(prefix, str(row[id_col])) : row['size_object']
             for idx, row in size_df.iterrows()
         }
 

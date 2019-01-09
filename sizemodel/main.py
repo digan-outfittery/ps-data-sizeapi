@@ -3,6 +3,7 @@ import datetime as dt
 from pkg_resources import resource_filename
 import os
 import logging
+import json
 
 from sizemodel.dataloading import load_from_db, load_yaml
 from sizemodel.sizemodel_atl_estimator import \
@@ -53,45 +54,45 @@ def main():
 
 
 
-def store_customer_sizes_in_redis(customer_size_df):
-    '''
-    Loop through the customer_sizes DataFrame and store each row in the redis database
-
-    Args:
-        customer_size_df: The dataframe of customer sizes
-    '''
-
-    log.info('Storing customer sizes for %s customers', len(customer_size_df))
-
-    redis_store = RedisStore()
-
-    counter = 0
-    for idx, row in customer_size_df.iterrows():
-
-        counter += 1
-        if counter % 10 == 0:
-            print('{0} rows => {1}'.format(counter, dt.datetime.now()))
-        customer_id = row['customer_id']
-        size_object = row['size_object']
-        redis_store.set_customer_sizes(customer_id, size_object)
-
-
-def store_article_sizes_in_redis(article_size_df):
-    '''
-    Loop through the article_sizes DataFrame and store each row in the redis database
-
-    Args:
-        article_size_df: The dataframe of article sizes
-    '''
-
-    log.info('Storing article sizes for %s articles', len(article_size_df))
-
-    redis_store = RedisStore()
-
-    for idx, row in article_size_df.iterrows():
-        article_id = row['item_size_id']
-        size_object = row['size_object']
-        redis_store.set_article_sizes(article_id, size_object)
+# def store_customer_sizes_in_redis(customer_size_df):
+#     '''
+#     Loop through the customer_sizes DataFrame and store each row in the redis database
+#
+#     Args:
+#         customer_size_df: The dataframe of customer sizes
+#     '''
+#
+#     log.info('Storing customer sizes for %s customers', len(customer_size_df))
+#
+#     redis_store = RedisStore()
+#
+#     counter = 0
+#     for idx, row in customer_size_df.iterrows():
+#
+#         counter += 1
+#         if counter % 10 == 0:
+#             print('{0} rows => {1}'.format(counter, dt.datetime.now()))
+#         customer_id = row['customer_id']
+#         size_object = row['size_object']
+#         redis_store.set_customer_sizes(customer_id, size_object)
+#
+#
+# def store_article_sizes_in_redis(article_size_df):
+#     '''
+#     Loop through the article_sizes DataFrame and store each row in the redis database
+#
+#     Args:
+#         article_size_df: The dataframe of article sizes
+#     '''
+#
+#     log.info('Storing article sizes for %s articles', len(article_size_df))
+#
+#     redis_store = RedisStore()
+#
+#     for idx, row in article_size_df.iterrows():
+#         article_id = row['item_size_id']
+#         size_object = row['size_object']
+#         redis_store.set_article_sizes(article_id, size_object)
 
 
 
@@ -115,7 +116,7 @@ def _transform_cust_size_df(size_df):
         {
             'customer_id': row['customer_id'],
             'model_timestamp': upload_date,
-            'size_object': {
+            'size_object': json.dumps({
                 'customerId': row['customer_id'],
                 'modelTimestamp': str(upload_date),
                 'sizes': [
@@ -140,7 +141,7 @@ def _transform_cust_size_df(size_df):
                                 'sigma': row['std_cust_trouserslength']
                             }
                         ]
-            }
+            })
 
         }
         for idx, row in size_df.iterrows()
@@ -166,7 +167,7 @@ def _transform_item_size_df(size_df):
         {
             'article_id': row['item_size_id'],
             'model_timestamp': upload_date,
-            'size_object': {
+            'size_object': json.dumps({
                 'articleId': row['item_size_id'],
                 'modelTimestamp': str(upload_date),
                 'sizes': [
@@ -191,7 +192,7 @@ def _transform_item_size_df(size_df):
                                 'sigma': row['std_item_trouserslength']
                             }
                         ]
-            }
+            })
         }
         for idx, row in size_df.iterrows()
     )

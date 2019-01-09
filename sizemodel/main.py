@@ -19,6 +19,8 @@ DROP_AND_CREATE_MLDB_TABLES_SQL = resource_filename(__name__, 'resources/create_
 
 def main():
 
+    redis_store = RedisStore()
+
     log.info('Training the ATL size model')
     # Run the ATL model and get the customer, item sizes
     df_item_size, df_customer_size = run_size_model()
@@ -28,14 +30,13 @@ def main():
     df_customer_size = _transform_cust_size_df(df_customer_size)
     df_item_size = _transform_item_size_df(df_item_size)
 
-    import ipdb; ipdb.set_trace()
-
     log.info('Storing the data in the redis database')
     #Store the sizes in the redis database
-    store_customer_sizes_in_redis(df_customer_size)
-    store_article_sizes_in_redis(df_item_size)
+    redis_store.set_customer_df_sizes(df_customer_size)
+    redis_store.set_customer_df_sizes(df_customer_size)
 
-    import ipdb; ipdb.set_trace()
+    # store_customer_sizes_in_redis(df_customer_size)
+    # store_article_sizes_in_redis(df_item_size)
 
     log.info('Storing the data in MLDB')
     #Drop & Create the required tables in MLDB
@@ -64,7 +65,12 @@ def store_customer_sizes_in_redis(customer_size_df):
 
     redis_store = RedisStore()
 
+    counter = 0
     for idx, row in customer_size_df.iterrows():
+
+        counter += 1
+        if counter % 10 == 0:
+            print('{0} rows => {1}'.format(counter, dt.datetime.now()))
         customer_id = row['customer_id']
         size_object = row['size_object']
         redis_store.set_customer_sizes(customer_id, size_object)
@@ -111,7 +117,7 @@ def _transform_cust_size_df(size_df):
             'model_timestamp': upload_date,
             'size_object': {
                 'customerId': row['customer_id'],
-                'modelTimestamp': upload_date,
+                'modelTimestamp': str(upload_date),
                 'sizes': [
                             {
                                 'name': 'shoeSize',
@@ -162,7 +168,7 @@ def _transform_item_size_df(size_df):
             'model_timestamp': upload_date,
             'size_object': {
                 'articleId': row['item_size_id'],
-                'modelTimestamp': upload_date,
+                'modelTimestamp': str(upload_date),
                 'sizes': [
                             {
                                 'name': 'shoeSize',

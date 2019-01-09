@@ -127,6 +127,7 @@ class SizeClassifier(BaseEstimator, ClassifierMixin):
         df_cust = pd.DataFrame(data=[means, sdevs],
                                index=['mean_cust_' + size_cat_name, 'std_cust_' + size_cat_name]).T
         means = posteriors['item_' + var_name].mean().eval()
+
         # for items the variance is stored instead of the scale like in studentt
         sdevs = np.sqrt(posteriors['item_' + var_name].variance().eval())
         df_item = pd.DataFrame(data=[means, sdevs],

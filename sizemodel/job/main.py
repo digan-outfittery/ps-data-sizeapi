@@ -6,7 +6,7 @@ import logging
 import json
 
 from sizemodel.dataloading import load_from_db, load_yaml
-from sizemodel.sizemodel_atl_estimator import \
+from sizemodel.job.sizemodel_atl_estimator import \
     SizeClassifier as SizeClassifierATL
 from sizemodel.sizemodel_unwrapped.sizemodel import SizeClassifier
 from sizemodel.db.redis_interaction import RedisStore

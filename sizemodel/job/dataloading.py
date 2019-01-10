@@ -6,7 +6,7 @@ import yaml
 
 import dateparser
 from sizemodel.db.connections import mldb as db_conn
-from sizemodel.picklecache import PickleCache
+from sizemodel.job.picklecache import PickleCache
 
 log = logging.getLogger(__name__)
 

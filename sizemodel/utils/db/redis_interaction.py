@@ -1,6 +1,5 @@
 import redis
 import logging
-import pickle as pkl
 import json
 import os
 
@@ -27,20 +26,6 @@ class RedisStore():
 
         log.info('Initalised the redis database with host: %s and port: %s', host, port)
 
-    def set_single_customer_sizes(self, customer_id, customer_sizes):
-        '''
-        Store a given customers sizes
-
-        Args:
-            customer_id(int): The customers ID
-            customer_sizes(dict): The customers sizes
-        '''
-        log.debug('Customer:Storing %s for %s', str(customer_sizes), customer_id)
-
-        key = 'customer:{0}'.format(str(customer_id))
-        json_sizes = json.dumps(customer_sizes) #Redis can't store dictionaries directly
-        self.db.set(key, pkl_sizes)
-
     def set_customer_df_sizes(self, customer_size_df):
         '''
         Store the customer sizes all at once rather than one at a time
@@ -52,7 +37,23 @@ class RedisStore():
         size_dict = self._size_df_to_dict(
             size_df=customer_size_df,
             id_col='customer_id',
-            prefix='customer'
+            prefix='existing_customer'
+        )
+        log.info('Storing dict')
+        self.db.mset(size_dict)
+
+    def set_new_customer_df_sizes(self, new_customer_size_df):
+        '''
+        Store the new customer sizes all at once rather than one at a time
+
+        Args:
+            new_customer_size_df: The dataframe with id and size_object
+        '''
+        log.info('Converting dataframe to dict for storage')
+        size_dict = self._size_df_to_dict(
+            size_df=new_customer_size_df,
+            id_col='id',
+            prefix='new_customer'
         )
         log.info('Storing dict')
         self.db.mset(size_dict)
@@ -67,12 +68,11 @@ class RedisStore():
         log.info('Converting dataframe to dict for storage')
         size_dict = self._size_df_to_dict(
             size_df=article_size_df,
-            id_col='item_size_id',
+            id_col='article_id',
             prefix='article'
         )
         log.info('Storing dict')
         self.db.mset(size_dict)
-
 
     def get_single_customer_sizes(self, customer_id):
         '''
@@ -90,23 +90,7 @@ class RedisStore():
         str_sizes = self.db.get(key)
         return json.loads(str_sizes)
 
-
-    def set_single_article_sizes(self, article_id, article_sizes):
-        '''
-        Store a given articles sizes
-
-        Args:
-            article_id(int): The article ID
-            article_sizes(dict): The articles sizes
-        '''
-        log.debug('Article: Storing %s for %s', str(article_sizes), article_id)
-
-        key = 'article:{0}'.format(str(article_id))
-        pkl_sizes = pkl.dumps(article_sizes) #Redis can't store dictionaries directly
-        self.db.set(key, pkl_sizes)
-
-
-    def get_article_sizes(self, article_id):
+    def get_single_article_sizes(self, article_id):
         '''
         Get a given article sizes
 
@@ -120,8 +104,50 @@ class RedisStore():
 
         key = 'article:{0}'.format(str(article_id))
         str_sizes = self.db.get(key)
-        return pkl.loads(str_sizes)
+        return json.loads(str_sizes)
 
+    def set_single_customer_sizes(self, customer_id, customer_sizes):
+        '''
+        Store a given customers sizes
+
+        Args:
+            customer_id(int): The customers ID
+            customer_sizes(dict): The customers sizes
+        '''
+        log.debug('Customer:Storing %s for %s', str(customer_sizes), customer_id)
+
+        key = 'customer:{0}'.format(str(customer_id))
+        json_sizes = json.dumps(customer_sizes) #Redis can't store dictionaries directly
+        self.db.set(key, json_sizes)
+
+    def set_single_article_sizes(self, article_id, article_sizes):
+        '''
+        Store a given articles sizes
+
+        Args:
+            article_id(int): The article ID
+            article_sizes(dict): The articles sizes
+        '''
+        log.debug('Article: Storing %s for %s', str(article_sizes), article_id)
+
+        key = 'article:{0}'.format(str(article_id))
+        json_sizes = json.dumps(article_sizes) #Redis can't store dictionaries directly
+        self.db.set(key, json_sizes)
+
+    def exists_in_db(self, id, prefix='existing_customer'):
+        '''
+        Check whether or not a given article or customer has sizes associated with it
+
+        Args:
+            id: The article or customer ID
+            prefix: The prefix used for storage
+
+        Returns:
+            bool: Whether or not the customer or article exists in the database
+        '''
+
+        key = '{0}:{1}'.format(prefix, str(id))
+        return self.db.exists(key)
 
     def _size_df_to_dict(self, size_df, id_col, prefix):
         '''

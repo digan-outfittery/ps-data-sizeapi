@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from sizemodel.size_consistency_checker.size_consistency_checker import \
+from sizemodel.job.size_consistency_checker.size_consistency_checker import \
     SizeChecker
 from sklearn.linear_model import LinearRegression
 

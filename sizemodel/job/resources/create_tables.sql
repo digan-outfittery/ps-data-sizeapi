@@ -1,7 +1,16 @@
-drop table if exists ml.atl_sizemodel_cust_sizes;
-create table ml.atl_sizemodel_cust_sizes
+drop table if exists ml.atl_sizemodel_existing_cust_sizes;
+create table ml.atl_sizemodel_existing_cust_sizes
 (
 	customer_id int,
+	model_timestamp timestamp,
+	size_object jsonb
+);
+
+
+drop table if exists ml.atl_sizemodel_new_cust_sizes;
+create table ml.atl_sizemodel_new_cust_sizes
+(
+	id varchar(100),
 	model_timestamp timestamp,
 	size_object jsonb
 );

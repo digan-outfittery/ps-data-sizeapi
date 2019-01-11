@@ -4,7 +4,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from sizemodel.size_consistency_checker.size_consistency_checker import \
+from sizemodel.job.size_consistency_checker.size_consistency_checker import \
     SizeChecker
 from sklearn.base import BaseEstimator, ClassifierMixin
 
@@ -48,6 +48,7 @@ class SizeClassifier(BaseEstimator, ClassifierMixin):
         self.right_shift = right_shift
 
     def fit(self, *, df_train):
+
         assert 'item_no' in df_train and 'nav_size_code' in df_train
         # prepare the data
         df_train['item_size_id'] = df_train['item_no'] + "_" + df_train['nav_size_code']
@@ -89,6 +90,8 @@ class SizeClassifier(BaseEstimator, ClassifierMixin):
                           cust_size_col=None, var_name='trouserslength')
         self._store_sizes(df_train, posteriors, idx2cust, idx2item, size_cat_name='trouserswidth',
                           cust_size_col=None, var_name='trouserswidth')
+
+        self._store_new_customer_sizes(df_train)
 
     # def predict(self, df):
     #     '''prediction for the one-customer-case'''
@@ -151,6 +154,47 @@ class SizeClassifier(BaseEstimator, ClassifierMixin):
             self.sizes[size_cat_name]['default_cust'] = df_cust.groupby(cust_size_col)['mean_cust_' + size_cat_name].mean().to_dict()
         else:
             self.sizes[size_cat_name]['default_cust'] = {str(i) : i for i in range(25, 55)}
+
+
+    def _store_new_customer_sizes(self, df_train):
+        '''
+        Get the mean size for all of the potential customer sizes for each dimension
+
+        Args:
+            df_train: The training dataframe passed originally to the fit() function
+
+        Returns:
+            dict: A dictionary with keys for each different size dimension and the means associated with each possible value
+        '''
+
+        #Dictionary to map from the column in df_train to the name in self.sizes
+        df_train_to_size_mapper = {
+            'shoe_size': 'shoesize',
+            'shirt_size': 'shirtsize',
+            'trousers_size_length': 'trouserslength',
+            'trousers_size_width': 'trouserswidth'
+        }
+
+        def _get_mean_dict(df_train_col, sizes_key):
+
+            size_values_key = 'mean_cust_{0}'.format(sizes_key)
+            cust_size_map = self.sizes[sizes_key]['cust'][size_values_key]
+
+            train_df = df_train[['customer_id', df_train_col]]
+            model_df = pd.DataFrame({
+                'customer_id': list(cust_size_map.keys()),
+                'model_size_mu': list(cust_size_map.values())
+            })
+
+            joined_df = train_df.merge(model_df, on='customer_id')
+            return joined_df.groupby(df_train_col)['model_size_mu'].agg(np.mean).to_dict()
+
+        new_cust_sizes = {}
+        for df_train_col, sizes_key in df_train_to_size_mapper.items():
+            size_dct = _get_mean_dict(df_train_col, sizes_key)
+            new_cust_sizes[sizes_key] = size_dct
+
+        self.new_cust_sizes = new_cust_sizes
 
     def _pred_cat(self, df, sizecat_name, category_multiplyer=1.0,
                   orig_itemsize_name='nav_size_code', orig_custsize_name='shirt_sizes'):

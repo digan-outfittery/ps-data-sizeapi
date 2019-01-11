@@ -6,7 +6,7 @@ import pandas as pd
 import tensorflow as tf
 
 import edward
-from sizemodel.size_consistency_checker.size_consistency_checker import \
+from sizemodel.job.size_consistency_checker.size_consistency_checker import \
     SizeChecker
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.linear_model import LinearRegression

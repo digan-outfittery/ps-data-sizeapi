@@ -5,13 +5,13 @@ import os
 import logging
 import json
 
-from sizemodel.dataloading import load_from_db, load_yaml
+from sizemodel.job.dataloading import load_from_db, load_yaml
 from sizemodel.job.sizemodel_atl_estimator import \
     SizeClassifier as SizeClassifierATL
-from sizemodel.sizemodel_unwrapped.sizemodel import SizeClassifier
-from sizemodel.db.redis_interaction import RedisStore
-from sizemodel.db.pgsql_interaction import insert_into_table_batched, run_sql
-from sizemodel.db.connections import mldb as pgsql_conn
+from sizemodel.job.sizemodel_unwrapped.sizemodel import SizeClassifier
+from sizemodel.utils.db.redis_interaction import RedisStore
+from sizemodel.utils.db.pgsql_interaction import insert_into_table_batched, run_sql
+from sizemodel.utils.db.connections import mldb as pgsql_conn
 from sklearn.metrics import roc_auc_score
 
 log = logging.getLogger(__name__)
@@ -24,80 +24,47 @@ def main():
 
     log.info('Training the ATL size model')
     # Run the ATL model and get the customer, item sizes
-    df_item_size, df_customer_size = run_size_model()
+    df_item_size, df_existing_customer_size, dct_new_customer_sizes = run_size_model()
 
     log.info('Transforming the output data')
     # #Transform them into the required format for DB upload
-    df_customer_size = _transform_cust_size_df(df_customer_size)
+    df_existing_customer_size = _transform_existing_cust_size_df(df_existing_customer_size)
+    df_new_customer_size = _transform_new_cust_size_dct(dct_new_customer_sizes)
     df_item_size = _transform_item_size_df(df_item_size)
 
     log.info('Storing the data in the redis database')
     #Store the sizes in the redis database
-    redis_store.set_customer_df_sizes(df_customer_size)
-    redis_store.set_customer_df_sizes(df_customer_size)
-
-    # store_customer_sizes_in_redis(df_customer_size)
-    # store_article_sizes_in_redis(df_item_size)
+    redis_store.set_customer_df_sizes(df_existing_customer_size)
+    redis_store.set_new_customer_df_sizes(df_new_customer_size)
+    redis_store.set_article_df_sizes(df_item_size)
 
     log.info('Storing the data in MLDB')
+    conn = pgsql_conn.connect()
     #Drop & Create the required tables in MLDB
     run_sql(
         sql_file=DROP_AND_CREATE_MLDB_TABLES_SQL,
-        conn=pgsql_conn.connect()
+        conn=conn
     )
     #Upload the size tables into the empty tables
     insert_into_table_batched(
+        df=df_existing_customer_size,
+        table=os.environ['MLDB_EXISTING_CUST_SIZE_TABLE'],
+        cursor=conn.cursor()
+    )
+    insert_into_table_batched(
+        df=df_new_customer_size,
+        table=os.environ['MLDB_NEW_CUST_SIZE_TABLE'],
+        cursor=conn.cursor()
+    )
+    insert_into_table_batched(
         df=df_item_size,
         table=os.environ['MLDB_ITEM_SIZE_TABLE'],
-        cursor=pgsql_conn.connect().cursor()
+        cursor=conn.cursor()
     )
+    conn.commit()
 
 
-
-# def store_customer_sizes_in_redis(customer_size_df):
-#     '''
-#     Loop through the customer_sizes DataFrame and store each row in the redis database
-#
-#     Args:
-#         customer_size_df: The dataframe of customer sizes
-#     '''
-#
-#     log.info('Storing customer sizes for %s customers', len(customer_size_df))
-#
-#     redis_store = RedisStore()
-#
-#     counter = 0
-#     for idx, row in customer_size_df.iterrows():
-#
-#         counter += 1
-#         if counter % 10 == 0:
-#             print('{0} rows => {1}'.format(counter, dt.datetime.now()))
-#         customer_id = row['customer_id']
-#         size_object = row['size_object']
-#         redis_store.set_customer_sizes(customer_id, size_object)
-#
-#
-# def store_article_sizes_in_redis(article_size_df):
-#     '''
-#     Loop through the article_sizes DataFrame and store each row in the redis database
-#
-#     Args:
-#         article_size_df: The dataframe of article sizes
-#     '''
-#
-#     log.info('Storing article sizes for %s articles', len(article_size_df))
-#
-#     redis_store = RedisStore()
-#
-#     for idx, row in article_size_df.iterrows():
-#         article_id = row['item_size_id']
-#         size_object = row['size_object']
-#         redis_store.set_article_sizes(article_id, size_object)
-
-
-
-
-def _transform_cust_size_df(size_df):
+def _transform_existing_cust_size_df(size_df):
     '''
     Transform the raw output from the ATLSizeModel into the required format for storage
 
@@ -109,16 +76,16 @@ def _transform_cust_size_df(size_df):
     '''
 
 
-    upload_date = dt.datetime.now()
+    upload_date = dt.datetime.now().isoformat()
 
     #Convert df_item_size to the required format for storage
-    ret_df = pd.DataFrame(
+    ret_dct = pd.DataFrame(
         {
-            'customer_id': row['customer_id'],
+            'customer_id': int(row['customer_id']),
             'model_timestamp': upload_date,
             'size_object': json.dumps({
-                'customerId': row['customer_id'],
-                'modelTimestamp': str(upload_date),
+                'customerId': int(row['customer_id']),
+                'modelTimestamp': '{0}{1}'.format(str(upload_date),'Z'),
                 'sizes': [
                             {
                                 'name': 'shoeSize',
@@ -147,8 +114,7 @@ def _transform_cust_size_df(size_df):
         for idx, row in size_df.iterrows()
     )
 
-    return ret_df
-
+    return ret_dct
 
 def _transform_item_size_df(size_df):
     '''
@@ -161,7 +127,10 @@ def _transform_item_size_df(size_df):
         pd.DataFrame: dataframe with columns: id, upload_time, sizes_dict
     '''
 
-    upload_date = dt.datetime.now()
+    #Convert all NaN values to None for json upload to MLDB
+    ret_df = size_df.astype(object).where(pd.notnull(size_df), None)
+
+    upload_date = dt.datetime.now().isoformat()
     # Convert df_item_size to the required format for storage
     ret_df = pd.DataFrame(
         {
@@ -169,7 +138,7 @@ def _transform_item_size_df(size_df):
             'model_timestamp': upload_date,
             'size_object': json.dumps({
                 'articleId': row['item_size_id'],
-                'modelTimestamp': str(upload_date),
+                'modelTimestamp': '{0}{1}'.format(str(upload_date),'Z'),
                 'sizes': [
                             {
                                 'name': 'shoeSize',
@@ -194,10 +163,46 @@ def _transform_item_size_df(size_df):
                         ]
             })
         }
-        for idx, row in size_df.iterrows()
+        for idx, row in ret_df.iterrows()
     )
 
     return ret_df
+
+def _transform_new_cust_size_dct(size_dct):
+    '''
+
+    Args:
+        size_dct: The original new customer sizes dictionary
+
+    Returns:
+        pd.DataFrame: dataframe with columns: id, upload_time, sizes_dict
+    '''
+
+    size_key_mapper = {
+        'shoesize': 'shoeSize',
+        'shirtsize': 'shirtSize',
+        'trouserslength': 'trouserSizeLength',
+        'trouserswidth': 'trouserSizeWidth'
+    }
+
+    upload_date = dt.datetime.now().isoformat()
+
+    all_sizes = []
+    for key, value in size_dct.items():
+        model_key = size_key_mapper[key]
+        for cust_size, model_size in value.items():
+            id = '{0}:{1}'.format(model_key, cust_size)
+            size_object = json.dumps({
+                'name': model_key,
+                'mu': model_size,
+                'sigma': None
+            })
+            row = [id, upload_date, size_object]
+            all_sizes.append(row)
+
+    colnames = ['id', 'model_timestamp', 'size_object']
+
+    return pd.DataFrame(all_sizes, columns=colnames)
 
 
 
@@ -227,7 +232,7 @@ def _transform_item_size_df(size_df):
 #     print('everything done')
 
 
-def run_size_model(config_path='sizemodel/resources/baseconfig.yml'):
+def run_size_model(config_path='sizemodel/job/resources/baseconfig.yml'):
     # load config file
     config = load_yaml(config_path)
     data = load_from_db(config['data']) #TODO: Change date_end in config file
@@ -241,18 +246,20 @@ def run_size_model(config_path='sizemodel/resources/baseconfig.yml'):
     #TODO: sm.sizes[default_category_name] .......
 
     # get the dataframes with the customer and item sizes
-    df_customer_size = sm.cust_sizes.dropna()
+    df_existing_customer_size = sm.cust_sizes.dropna()
     df_item_size = sm.item_sizes  # TODO we have to do a mapping if we want to provide sizes on article_id level
 
     # small evaluation to confirm everything worked
     df_test['item_size_id'] = df_test['item_no'] + '_' + df_test['nav_size_code']
     df_test = df_test.merge(df_item_size, on='item_size_id')
-    df_test = df_test.merge(df_customer_size, on='customer_id')
+    df_test = df_test.merge(df_existing_customer_size, on='customer_id')
     df_test['sizediff_shirt'] = (df_test['mean_item_shirtsize'] - df_test['mean_cust_shirtsize'])
     df_test['sizediff_shirt_q'] = pd.qcut(df_test['sizediff_shirt'], 10)
     print(df_test.dropna(subset=['sizediff_shirt']).groupby('sizediff_shirt_q')[['items_kept', 'feedback_too_small', 'feedback_too_large']].mean())
 
-    return df_item_size, df_customer_size
+    dct_new_customer_sizes = sm.new_cust_sizes
+
+    return df_item_size, df_existing_customer_size, dct_new_customer_sizes
 
 
 

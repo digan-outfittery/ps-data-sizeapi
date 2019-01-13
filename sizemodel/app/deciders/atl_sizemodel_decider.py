@@ -43,7 +43,7 @@ class ATLSizeModelDecider(BaseDecider):
 
         #Get the customer sizes
         customer_sizes = self._get_new_customer_size(request_data['attributes']['customer']) if is_new_customer \
-            else self._get_repeat_customer_size(request_data['attributes']['customerId'])
+            else self._get_existing_customer_size(request_data['attributes']['customerId'])
 
         #Get the article sizes
         article_sizes = self._get_article_sizes(request_data['attributes']['articles'])
@@ -136,41 +136,33 @@ class ATLSizeModelDecider(BaseDecider):
 
         '''
 
-        # TODO: Actually implement
-        customer_id = customer_object['id']
 
-        dct = {
-            "customerId": customer_id,
-            "isFirstTimeCustomer": True,
-            "sizes": [
-                {
-                    "name": "shoeSize",
-                    "mu": 12.4,
-                    "sigma": 3.2
-                },
-                {
-                    "name": "tShirtSize",
-                    "mu": 12.4,
-                    "sigma": 3.2
-                },
-                {
-                    "name": "trouserSizeWidth",
-                    "mu": 12.4,
-                    "sigma": 3.2
-                },
-                {
-                    "name": "trouserSizeLength",
-                    "mu": 12.4,
-                    "sigma": 3.2
-                }
-            ]
+        # sample_key = 'new_customer:shoeSize:43'
+
+        size_dimensions = [
+            'shoeSize',
+            'tShirtSize',
+            'trousersSizeWidth',
+            'trousersSizeLength'
+        ]
+        #TODO: Should I use the same customer_id as the other functions ?
+
+        size_list = []
+        for dim in size_dimensions:
+            cust_size = customer_object['profile'][dim]
+            model_size = self.redis_store.get_single_new_customer_size(dim, str(cust_size))
+            size_list.append(model_size)
+
+        ret_dict = {
+            'customerId': customer_object['id'],
+            'isFirstTimeCustomer': True,
+            'sizes': size_list
         }
 
+        return ret_dict
 
-        return dct
 
-
-    def _get_repeat_customer_size(self, customer_id):
+    def _get_existing_customer_size(self, customer_id):
         '''
         Get the mean & std dev of the size of a specific repeat customer
 
@@ -198,7 +190,7 @@ class ATLSizeModelDecider(BaseDecider):
 
         '''
 
-        cust_dct = self.redis_store.get_single_customer_sizes(customer_id)
+        cust_dct = self.redis_store.get_single_existing_customer_sizes(customer_id)
         cust_dct['isFirstTimeCustomer'] = False
         return cust_dct
 

@@ -4,19 +4,10 @@
         "data": {
             "type": "object",
             "properties": {
-                "type": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
                 "meta": {
                     "type": "object",
                     "properties": {
-                        "version": {
-                            "type": "integer"
-                        },
-                        "dateCreated": {
+                        "timeCreated": {
                             "$ref": "#/definitions/iso-datetime-utc"
                         },
                         "createdBy": {
@@ -30,8 +21,7 @@
                         }
                     },
                     "required": [
-                        "version",
-                        "dateCreated",
+                        "timeCreated",
                         "createdBy",
                         "logLabel",
                         "correlationId"
@@ -88,7 +78,7 @@
         "size": {
             "type": "object",
             "properties": {
-                "name": {"enum": ["shoeSize", "tShirtSize", "trouserSizeWidth", "trouserSizeLength"]},
+                "name": {"enum": ["shoeSize", "shirtSize", "trousersSizeWidth", "trousersSizeLength"]},
                 "mu": {"type": ["number", "null"]},
                 "sigma": {"type": ["number", "null"]}
             },

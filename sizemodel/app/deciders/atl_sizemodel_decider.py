@@ -110,6 +110,7 @@ class ATLSizeModelDecider(BaseDecider):
                             {
                                 "customerId": 122345_1224,
                                 "isFirstTimeCustomer": True,
+                                "modelTimestamp": "2019-01-14T16:40:12.003342Z",
                                 "sizes": [
                                     {
                                         "name": "shoeSize",
@@ -117,7 +118,7 @@ class ATLSizeModelDecider(BaseDecider):
                                         "sigma": None
                                     },
                                     {
-                                        "name": "tShirtSize",
+                                        "name": "shirtSize",
                                         "mu": 12.4,
                                         "sigma": None
                                     },
@@ -141,11 +142,10 @@ class ATLSizeModelDecider(BaseDecider):
 
         size_dimensions = [
             'shoeSize',
-            'tShirtSize',
+            'shirtSize',
             'trousersSizeWidth',
             'trousersSizeLength'
         ]
-        #TODO: Should I use the same customer_id as the other functions ?
 
         size_list = []
         for dim in size_dimensions:
@@ -153,8 +153,12 @@ class ATLSizeModelDecider(BaseDecider):
             model_size = self.redis_store.get_single_new_customer_size(dim, str(cust_size))
             size_list.append(model_size)
 
+        #Get the modelTimestamp
+        model_timestamp = self.redis_store.get_new_customer_size_model_timestamp()
+
         ret_dict = {
             'customerId': customer_object['id'],
+            'modelTimestamp':model_timestamp,
             'isFirstTimeCustomer': True,
             'sizes': size_list
         }
@@ -174,6 +178,7 @@ class ATLSizeModelDecider(BaseDecider):
                             {
                                 "customerId": 122345_1224,
                                 "isFirstTimeCustomer": False,
+                                "modelTimestamp": "2019-01-14T16:40:12.003342Z",
                                 "shoeSize": {
                                     "mu": 12.4,
                                     "sigma": 3.2
@@ -182,9 +187,15 @@ class ATLSizeModelDecider(BaseDecider):
                                     "mu": 12.4,
                                     "sigma": 3.2
                                 },
-                                "TrouserSize": {
+                                {
+                                    "name": "trouserSizeWidth",
                                     "mu": 12.4,
-                                    "sigma": 3.2
+                                    "sigma": None
+                                },
+                                {
+                                    "name": "trouserSizeLength",
+                                    "mu": 12.4,
+                                    "sigma": None
                                 }
                             }
 

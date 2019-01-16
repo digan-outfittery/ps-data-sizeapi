@@ -5,6 +5,14 @@ import os
 
 log = logging.getLogger(__name__)
 
+#TODO: Is this the best way to do this ?
+NEW_CUSTOMER_PREFIX = 'new_customer'
+EXISTING_CUSTOMER_PREFIX = 'existing_customer'
+ARTICLE_PREFIX = 'article'
+
+TIMESTAMP_SUFFIX = 'modelTimestamp'
+
+
 class RedisStore():
     '''
     Helper class to deal with the interactions with the redis DB
@@ -37,24 +45,29 @@ class RedisStore():
         size_dict = self._size_df_to_dict(
             size_df=customer_size_df,
             id_col='customer_id',
-            prefix='existing_customer'
+            prefix=EXISTING_CUSTOMER_PREFIX
         )
         log.debug('Storing dict')
         self.db.mset(size_dict)
 
-    def set_new_customer_df_sizes(self, new_customer_size_df):
+    def set_new_customer_df_sizes(self, new_customer_size_df, model_timestamp=None):
         '''
         Store the new customer sizes all at once rather than one at a time
 
         Args:
             new_customer_size_df: The dataframe with id and size_object
+            model_timestamp (timestamp): Whether to store the model_timestamp
         '''
         log.debug('Converting dataframe to dict for storage')
         size_dict = self._size_df_to_dict(
             size_df=new_customer_size_df,
             id_col='id',
-            prefix='new_customer'
+            prefix=NEW_CUSTOMER_PREFIX
         )
+        if model_timestamp is not None:
+            ts_key = '{0}:{1}'.format(NEW_CUSTOMER_PREFIX, TIMESTAMP_SUFFIX)
+            size_dict[ts_key] = str(model_timestamp)
+
         log.debug('Storing dict')
         self.db.mset(size_dict)
 
@@ -64,12 +77,13 @@ class RedisStore():
 
         Args:
             article_size_df: The dataframe with item_size_id and size_object
+
         '''
         log.debug('Converting dataframe to dict for storage')
         size_dict = self._size_df_to_dict(
             size_df=article_size_df,
             id_col='article_id',
-            prefix='article'
+            prefix=ARTICLE_PREFIX
         )
         log.debug('Storing dict')
         self.db.mset(size_dict)
@@ -85,10 +99,11 @@ class RedisStore():
             dict: The customers sizes
         '''
 
-        key = 'customer:{0}'.format(str(customer_id))
+        key = '{0}:{1}'.format(EXISTING_CUSTOMER_PREFIX, str(customer_id))
         log.debug('Getting value from key: %s', key)
 
         str_sizes = self.db.get(key)
+        import ipdb; ipdb.set_trace()
         return json.loads(str_sizes)
 
     def get_single_article_sizes(self, article_id):
@@ -102,7 +117,7 @@ class RedisStore():
             dict: The articles sizes
         '''
 
-        key = 'article:{0}'.format(str(article_id))
+        key = '{0}:{1}'.format(ARTICLE_PREFIX, str(article_id))
         log.debug('Getting value from key: %s', key)
 
         str_sizes = self.db.get(key)
@@ -127,13 +142,27 @@ class RedisStore():
                     }
         '''
 
-        key = 'new_customer:{0}:{1}'.format(size_dimension, size)
+        key = '{0}:{1}:{2}'.format(NEW_CUSTOMER_PREFIX, size_dimension, size)
         log.debug('Getting value from key: %s', key)
 
         str_sizes = self.db.get(key)
-        return json.loads(str_sizes)
+        try:
+            return json.loads(str_sizes)
+        except:
+            import ipdb; ipdb.set_trace()
 
-    def exists_in_db(self, id, prefix='existing_customer'):
+    def get_new_customer_size_model_timestamp(self):
+        '''
+        Get the modelTimestamp from the DB
+
+        Returns:
+            timestamp: The timestamp that the new customer models were created
+        '''
+
+        key = '{0}:{1}'.format(NEW_CUSTOMER_PREFIX, TIMESTAMP_SUFFIX)
+        return str(self.db.get(key))
+
+    def exists_in_db(self, id, prefix=EXISTING_CUSTOMER_PREFIX):
         '''
         Check whether or not a given article or customer has sizes associated with it
 

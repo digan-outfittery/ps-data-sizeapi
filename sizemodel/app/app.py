@@ -53,7 +53,7 @@ def setup_app():
 def unhandled_exception(e):
     log.exception('Unhandled exception: {}'.format(repr(e)))
     response = flask.jsonify({'errors': [repr(e)]})
-    response.status_code = 409
+    response.status_code = 400
     return response
 
 
@@ -80,7 +80,7 @@ def do_decision_logic():
         log.exception('Error validating request for request "{}"'
                       .format(request_data.get('data').get('meta').get('correlationId')))
         response = flask.jsonify({'errors': ['invalid request', str(e), repr(e)]})
-        response.status_code = 409
+        response.status_code = 400
         return response
 
     response_data = decider.decide(request_data)
@@ -93,6 +93,7 @@ def do_decision_logic():
         raise ValueError('Response for request "{}" is not valid: \n\n {}, \n\n{}'
                          .format(response_data['data']['meta']['correlationId'], response_data, repr(e)))
 
+    import ipdb; ipdb.set_trace()
     response = flask.jsonify(response_data)
     response.status_code = 201
 

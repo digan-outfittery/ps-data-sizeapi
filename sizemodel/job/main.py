@@ -29,13 +29,13 @@ def main():
     log.info('Transforming the output data')
     # #Transform them into the required format for DB upload
     df_existing_customer_size = _transform_existing_cust_size_df(df_existing_customer_size)
-    df_new_customer_size = _transform_new_cust_size_dct(dct_new_customer_sizes)
+    df_new_customer_size, model_timestamp = _transform_new_cust_size_dct(dct_new_customer_sizes)
     df_item_size = _transform_item_size_df(df_item_size)
 
     log.info('Storing the data in the redis database')
     #Store the sizes in the redis database
-    redis_store.set_customer_df_sizes(df_existing_customer_size)
-    redis_store.set_new_customer_df_sizes(df_new_customer_size)
+    redis_store.set_existing_customer_df_sizes(df_existing_customer_size)
+    redis_store.set_new_customer_df_sizes(df_new_customer_size, model_timestamp)
     redis_store.set_article_df_sizes(df_item_size)
 
     log.info('Storing the data in MLDB')
@@ -146,17 +146,17 @@ def _transform_item_size_df(size_df):
                                 'sigma': row['std_item_shoesize']
                             },
                             {
-                                'name': 'tShirtSize',
+                                'name': 'shirtSize',
                                 'mu': row['mean_item_shirtsize'],
                                 'sigma': row['std_item_shirtsize']
                             },
                             {
-                                'name': 'trouserSizeWidth',
+                                'name': 'trousersSizeWidth',
                                 'mu': row['mean_item_trouserswidth'],
                                 'sigma': row['std_item_trouserswidth']
                             },
                             {
-                                'name': 'trouserSizeLength',
+                                'name': 'trousersSizeLength',
                                 'mu': row['mean_item_trouserslength'],
                                 'sigma': row['std_item_trouserslength']
                             }
@@ -181,11 +181,12 @@ def _transform_new_cust_size_dct(size_dct):
     size_key_mapper = {
         'shoesize': 'shoeSize',
         'shirtsize': 'shirtSize',
-        'trouserslength': 'trouserSizeLength',
-        'trouserswidth': 'trouserSizeWidth'
+        'trouserslength': 'trousersSizeLength',
+        'trouserswidth': 'trousersSizeWidth'
     }
 
     upload_date = dt.datetime.now().isoformat()
+    upload_date = '{0}{1}'.format(str(upload_date), 'Z')
 
     all_sizes = []
     for key, value in size_dct.items():
@@ -202,7 +203,7 @@ def _transform_new_cust_size_dct(size_dct):
 
     colnames = ['id', 'model_timestamp', 'size_object']
 
-    return pd.DataFrame(all_sizes, columns=colnames)
+    return pd.DataFrame(all_sizes, columns=colnames), upload_date
 
 
 

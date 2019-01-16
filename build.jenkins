@@ -1,0 +1,73 @@
+@Library('ci-commons') _
+
+def getGitPath = { type, target ->
+    "refs/${type}/${target}"
+}
+
+pipeline {
+
+    agent { label 'Docker' }
+    
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    parameters {
+        string(name: 'target', defaultValue: 'master', description: 'Name of branch of tag to build')
+        choice(name: 'type', choices: 'heads\ntags', description: """
+            <ul>
+              <li><strong>heads</strong> == BRANCH to checkout</li>
+              <li><strong>tags</strong> == TAG to checkout</li>
+            </ul>
+        """)
+    }
+
+    stages {
+
+        stage('Init') {
+            steps {
+                script {
+                    deleteDir()
+                    def path = getGitPath(params.type, params.target)
+                    checkout([$class: 'GitSCM', branches: [[name: path]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'GitLFSPull'],[$class: 'ChangelogToBranch', options: [compareRemote: 'origin', compareTarget: 'master']]], submoduleCfg: [], userRemoteConfigs: [[url: "git@github.com:paulsecret/ps-data-sizeapi.git", credentialsId: "git_dd"]]])
+                    dir('ps-data-docker') {
+                        checkout([$class: 'GitSCM', branches: [[name: 'master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'GitLFSPull']],submoduleCfg: [], userRemoteConfigs: [[url: "git@github.com:paulsecret/ps-data-docker.git", credentialsId: "git_dd"]]])
+                    }
+                }
+            }
+        }
+
+        stage('Build') {
+
+            steps {
+                script {
+                    // needed to speed up builds
+                    env.WHEELCACHE_DIR = '/var/lib/jenkins-slave/wheelcache'
+
+                    // needed so that we know where we can get the base image from
+                    env.DOCKER_REGISTRY_PREFIX = 'registry.apps.outfittery.de/'
+
+                    // needed so that we can build multiple packages from the same commit
+                    def build_json = 'sizemodel/app/build.json'
+
+                    // run build.py in virtual environment
+                    withPythonEnv('/usr/bin/python3') {
+                        pysh "pip3 install setuptools wheel plumbum docopt autoversion"
+                        pysh "python3 ps-data-docker/new/build.py --prepare-build-args=\"--build-json=${build_json}\" --build-number=${BUILD_NUMBER} ."
+                    }
+                }
+            }
+        }
+
+        stage('Docker push') {
+            steps {
+                script {
+                    def shortName = readFile('docker_image_name')
+                    def imageName = "registry.apps.outfittery.de/" + shortName
+                    dockerize.pushImageAs(shortName, imageName)
+                    currentBuild.description = imageName
+                }
+            }
+        }
+    }
+}
